@@ -6,6 +6,7 @@ const TOKEN = process.env.STRAPI_TOKEN || ''
 const STRAPI_URL = process.env.STRAPI_URL || 'http://localhost:8080'
 const TOPIC = process.env.TOPIC || 'product'
 const BEGINNING = process.env.BEGINNING == 'true' || 'false'
+const ERROR_TOPIC = process.env.ERROR_TOPIC || 'errors'
 
 const log = (...str) => console.log(`${new Date().toUTCString()}: `, ...str)
 
@@ -15,6 +16,7 @@ const kafka = new Kafka({
 })
 
 const consumer = kafka.consumer({ groupId: 'product-creator' })
+const producer = kafka.producer()
 
 const consume = async () => {
   await consumer.connect()
@@ -22,11 +24,19 @@ const consume = async () => {
 
   await consumer.run({
     eachMessage: async ({ message }) => {
-      const strProduct = message.value.toString()
-      const product = JSON.parse(strProduct)
-      log('creating', strProduct)
-      log(product.name, await createProduct(product))
-      log('created', strProduct)
+      try {
+        const strProduct = message.value.toString()
+        const product = JSON.parse(strProduct)
+        log('creating', strProduct)
+        log(product.name, await createProduct(product))
+        log('created', strProduct)
+      } catch (error) {
+        if (ERROR_TOPIC)
+          producer.send({
+            topic: ERROR_TOPIC,
+            messages: [{ value: { error, message } }],
+          })
+      }
     },
   })
 }

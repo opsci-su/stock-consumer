@@ -34,4 +34,4 @@ const produceProduct = async (products) => {
   await producer.disconnect()
 }
 
-await produceProduct(produce(100))
+await produceProduct(produce(10))
