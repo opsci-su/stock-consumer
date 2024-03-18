@@ -4,18 +4,18 @@ const BROKER_2 = process.env.BROKER_2 || 'localhost:9092'
 const BROKER_3 = process.env.BROKER_3 || 'localhost:9092'
 const TOKEN = process.env.STRAPI_TOKEN || ''
 const STRAPI_URL = process.env.STRAPI_URL || 'http://localhost:8080'
-const TOPIC = process.env.TOPIC || 'product'
+const TOPIC = process.env.TOPIC || 'event'
 const BEGINNING = process.env.BEGINNING == 'true' || 'false'
 const ERROR_TOPIC = process.env.ERROR_TOPIC || 'errors'
 
 const log = (...str) => console.log(`${new Date().toUTCString()}: `, ...str)
 
 const kafka = new Kafka({
-  clientId: 'product-consumer',
+  clientId: 'event-consumer',
   brokers: [BROKER_1, BROKER_2, BROKER_3],
 })
 
-const consumer = kafka.consumer({ groupId: 'product-creator' })
+const consumer = kafka.consumer({ groupId: 'event-creator' })
 const producer = kafka.producer()
 
 const consume = async () => {
@@ -26,9 +26,9 @@ const consume = async () => {
     eachMessage: async ({ message }) => {
       try {
         const strProduct = message.value.toString()
-        const product = JSON.parse(strProduct)
+        const event = JSON.parse(strProduct)
         log('creating', strProduct)
-        log(product.name, await createProduct(product))
+        log(event.name, await createProduct(event))
         log('created', strProduct)
       } catch (error) {
         if (ERROR_TOPIC)
@@ -41,11 +41,11 @@ const consume = async () => {
   })
 }
 
-const createProduct = async (product) => {
-  const res = await fetch(STRAPI_URL + '/api/products', {
+const createProduct = async (event) => {
+  const res = await fetch(STRAPI_URL + '/api/events', {
     method: 'POST',
     body: JSON.stringify({
-      data: product,
+      data: event,
     }),
     headers: {
       Authorization: `Bearer ${TOKEN}`,

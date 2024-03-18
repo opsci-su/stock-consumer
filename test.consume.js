@@ -13,11 +13,10 @@ const kafka = new Kafka({
 const producer = kafka.producer()
 
 const genProduct = () => ({
-  name: faker.commerce.productName(),
-  description: faker.commerce.productDescription(),
-  stock_available: faker.number.int(40),
-  barcode: faker.commerce.isbn({ variant: 10, separator: '' }),
-  status: ['safe', 'danger'][faker.number.int(1)],
+  value: faker.hacker.ingverb(),
+  metadata: {
+    [faker.hacker.noun()]: faker.hacker.abbreviation(),
+  },
 })
 
 const produce = (amount = 1) => new Array(amount).fill(0).map(genProduct)
@@ -25,12 +24,12 @@ const produce = (amount = 1) => new Array(amount).fill(0).map(genProduct)
 const produceProduct = async (products) => {
   await producer.connect()
   await producer.send({
-    topic: 'product',
+    topic: 'event',
     messages: products.map((product) => ({
       value: JSON.stringify(product),
     })),
   })
-  console.log(products.map((p) => p.name).join('\n'))
+  console.log(products.map((p) => p.value).join('\n'))
   await producer.disconnect()
 }
 
