@@ -25,11 +25,11 @@ const consume = async () => {
   await consumer.run({
     eachMessage: async ({ message }) => {
       try {
-        const strProduct = message.value.toString()
-        const event = JSON.parse(strProduct)
-        log('creating', strProduct)
-        log(event.name, await createProduct(event))
-        log('created', strProduct)
+        const strEvent = message.value.toString()
+        const event = JSON.parse(strEvent)
+        log('creating', strEvent)
+        log(event.name, await createEvent(event))
+        log('created', strEvent)
       } catch (error) {
         if (ERROR_TOPIC)
           producer.send({
@@ -41,7 +41,7 @@ const consume = async () => {
   })
 }
 
-const createProduct = async (event) => {
+const createEvent = async (event) => {
   const res = await fetch(STRAPI_URL + '/api/events', {
     method: 'POST',
     body: JSON.stringify({
