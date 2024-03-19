@@ -4,18 +4,18 @@ const BROKER_2 = process.env.BROKER_2 || 'localhost:9092'
 const BROKER_3 = process.env.BROKER_3 || 'localhost:9092'
 const TOKEN = process.env.STRAPI_TOKEN || ''
 const STRAPI_URL = process.env.STRAPI_URL || 'http://localhost:8080'
-const TOPIC = process.env.TOPIC || 'event'
+const TOPIC = process.env.TOPIC || 'stock'
 const BEGINNING = process.env.BEGINNING == 'true' || 'false'
 const ERROR_TOPIC = process.env.ERROR_TOPIC || 'errors'
 
 const log = (...str) => console.log(`${new Date().toUTCString()}: `, ...str)
 
 const kafka = new Kafka({
-  clientId: 'event-consumer',
+  clientId: 'stock-consumer',
   brokers: [BROKER_1, BROKER_2, BROKER_3],
 })
 
-const consumer = kafka.consumer({ groupId: 'event-creator' })
+const consumer = kafka.consumer({ groupId: 'stock-creator' })
 const producer = kafka.producer()
 
 const consume = async () => {
@@ -26,26 +26,48 @@ const consume = async () => {
     eachMessage: async ({ message }) => {
       try {
         const strProduct = message.value.toString()
-        const event = JSON.parse(strProduct)
+        const stock = JSON.parse(strProduct)
         log('creating', strProduct)
-        log(event.name, await createEvent(event))
+        log(stock, await applyStockChange(stock))
         log('created', strProduct)
       } catch (error) {
+        console.error(error)
         if (ERROR_TOPIC)
           producer.send({
             topic: ERROR_TOPIC,
-            messages: [{ value: { error, message } }],
+            messages: [{ value: JSON.stringify({ error, message }) }],
           })
       }
     },
   })
 }
 
-const createEvent = async (event) => {
-  const res = await fetch(STRAPI_URL + '/api/events', {
-    method: 'POST',
+const applyStockChange = async (stock) => {
+  console.log(stock)
+  if (!stock.id || !stock.type || !stock.amount)
+    throw new Error('invalid format')
+
+  const product = await fetch(STRAPI_URL + '/api/products/' + stock.id, {
+    headers: {
+      Authorization: `Bearer ${TOKEN}`,
+      'content-type': 'application/json',
+    },
+  })
+    .then((r) => r.json())
+    .then((r) => r.data)
+
+  const changeStock = (stock.type === 'IN' ? 1 : -1) * stock.amount
+
+  if (changeStock < 0) throw new Error('negative stock')
+
+  const data = {
+    available_stock: product.attributes.available_stock + changeStock,
+  }
+
+  const res = await fetch(STRAPI_URL + '/api/products/' + stock.id, {
+    method: 'PUT',
     body: JSON.stringify({
-      data: event,
+      data,
     }),
     headers: {
       Authorization: `Bearer ${TOKEN}`,
