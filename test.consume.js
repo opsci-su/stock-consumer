@@ -13,7 +13,7 @@ const kafka = new Kafka({
 const producer = kafka.producer()
 
 const genProduct = () => ({
-  value: faker.hacker.ingverb(),
+  value: faker.hacker.phrase(),
   metadata: {
     [faker.hacker.noun()]: faker.hacker.abbreviation(),
   },
