@@ -12,4 +12,5 @@ STRAPI_TOKEN=
 STRAPI_URL=http://localhost:8080
 TOPIC=event
 BEGINNING=false
+ERROR_TOPIC=errors
 ```
