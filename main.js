@@ -25,11 +25,11 @@ const consume = async () => {
   await consumer.run({
     eachMessage: async ({ message }) => {
       try {
-        const strEvent = message.value.toString()
-        const event = JSON.parse(strEvent)
-        log('creating', strEvent)
+        const strProduct = message.value.toString()
+        const event = JSON.parse(strProduct)
+        log('creating', strProduct)
         log(event.name, await createEvent(event))
-        log('created', strEvent)
+        log('created', strProduct)
       } catch (error) {
         if (ERROR_TOPIC)
           producer.send({
