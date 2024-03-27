@@ -1,4 +1,4 @@
-# Product consumer
+# Event consumer
 
 ## Environment
 
