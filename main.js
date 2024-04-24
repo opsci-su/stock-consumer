@@ -64,6 +64,7 @@ const applyStockChange = async (stock) => {
     available_stock: product.attributes.available_stock + changeStock,
   }
 
+  console.log(JSON.stringify({ data }))
   const res = await fetch(STRAPI_URL + '/api/products/' + stock.id, {
     method: 'PUT',
     body: JSON.stringify({
